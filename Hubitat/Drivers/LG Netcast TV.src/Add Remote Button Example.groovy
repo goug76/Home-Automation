@@ -21,7 +21,7 @@ metadata {
         attribute "model", "string"
         
         command "showKey"
-        command "exampleButton"
+        command "exampleButton"  //Add the Command for the button i.e. Up Arrow
 	}
 
 
@@ -29,7 +29,7 @@ metadata {
         //CODE
   }
 }
-
+// Then create the method for the button. 
 def exampleButton() {
     if (detailedLog) log.debug "Executing 'exampleButton'"
 	sendCommand(27)
