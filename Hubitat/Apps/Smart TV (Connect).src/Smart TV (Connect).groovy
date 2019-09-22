@@ -12,13 +12,22 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- */
+ ************************************************Change Record**********************************************************
+ *
+ *    Version 1.0.0
+ *                    Initial Release
+ *
+ **********************************************************************************************************************/
+
+public static String version()      {  return "v1.0.0"  }
+
 definition(
     name: "Smart TV (Connect)",
     namespace: "goug76",
     author: "John Goughenour",
     description: "Smart app to discover and subscribe to TV events for Smart TVs.",
     category: "My Apps",
+    parent: "goug76:Smart Home Automation",
     iconUrl: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png",
     iconX2Url: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png",
     iconX3Url: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png")
@@ -33,44 +42,40 @@ preferences {
 	page(name:"discovery", title:"Smart TV Discovery", content:"discovery", refreshTimeout:5)
 	page(name:"pairing", title:"Smart TV Pairing", content:"pairing", refreshTimeout:5)
     page(name: "addDevices", title: "Add Smart TVs", content: "addDevices")
-    page(name: "configureTv")
-    page(name: "changeName")
-    page(name: "deleteTv")
 }
 
 def mainPage() {
-	dynamicPage(name: "mainPage", title: "Manage your Smart Tvs", nextPage: null, uninstall: true, install: true) {
-    	section("Configure"){
-            input ("tvSelector", "enum", title: "Select TV Driver", required:true, options: state.tvs)
-        	href "discovery", title:"Discover Smart Tvs", description:""
+    def heartbeat = [:]
+    heartbeat << ["1":"Every 1 Minute"]
+    heartbeat << ["5":"Every 5 Minutes"]
+    heartbeat << ["10":"Every 10 Minutes"]
+    heartbeat << ["15":"Every 15 Minutes"]
+    heartbeat << ["30":"Every 30 Minutes"]
+    heartbeat << ["60":"Every 1 Hour"]
+    heartbeat << ["180":"Every 3 Hours"]
+    
+	dynamicPage(name: "mainPage", title: "<h2>Manage your Smart TV</h2>", nextPage: null, uninstall: true, install: true) {
+    	section("<b>Configure</b>"){
+            input ("tvSelector", "enum", title: "Select TV Driver:", required:true, options: state.tvs)
+        	href "discovery", title:"Discover Smart TV", description:"", state: selectedTvs ? "complete" : null
         }
-        section("Additional Options") {
-        	label title: "Name TV Group", required: false
-            mode title: "Only run during specific mode(s)", required: false
-        }
-        section("Installed Devices"){
-        	getChildDevices().sort({ a, b -> a["deviceNetworkId"] <=> b["deviceNetworkId"] }).each {
-                href "configureTv", title:"$it.label", description:"", params: [tvId: it.deviceNetworkId]
+        def child = getChildDevices()
+        if(child) {
+            section("<b>Installed Device</b>"){
+                input ("childName", "text", title: "Device Name:", defaultValue: child.label)
+            }
+            section("<b>Heartbeat</b>") {
+                input ("heartBeatCheck", "enum", title: "Check Heartbeat", options: heartbeat, defaultValue: 60)
             }
         }
-    }
-}
-
-def configureTv(params){
-    if(params.tvId) {
-        state.currentTvId = params.tvId
-        state.currentDisplayName = getChildDevice(params.tvId)?.displayName
-    }
-    dynamicPage(name: "configureTv", title: "Configure Smart TV created with this app", nextPage: null) {
-        section {
-            app.updateSetting("${state.currentTvId}_label", getChildDevice(state.currentTvId).label)
-            input "${state.currentTvId}_label", "text", title:"TV Name", description: "", required: false
-            href "changeName", title:"Change TV Name", description: "Edit the TV name above and click here to change it"
+        section("<b>Additional Options</b>") {
+        	label title: "App Name:", required: false
+            mode title: "Only run during specific mode(s):", required: false
         }
-        section {
-            href "deleteTv", title:"Delete $state.currentDisplayName", description: ""
+        section("<p style=\"border-bottom:1px solid\"/>") {
+            paragraph "<p style=\"text-align:center\"><strong>John Goughenour</strong></br>${app.name}</br><em>${version()}</em></p>"
         }
-    }
+    }    
 }
 
 def discovery(params=[:]) {
@@ -108,7 +113,7 @@ def discovery(params=[:]) {
 		
 		return dynamicPage(name:"discovery", title:"Smart TV Search Started!", nextPage:"pairing", refreshInterval:refreshInterval){
             section("Please wait while we discover your ${state.tvs[tvSelector]}. Discovery can take five minutes or more, so sit back and relax! Select your device below once discovered."){
-				input "selectedTvs", "enum", required:true, title:"Select Smart TV (${numFound} found)", multiple:false, options:options
+				input "selectedTvs", "enum", required:true, title:"Select Smart TV (${numFound} found):", multiple:false, options:options
 			}
 			section("Options") {
 				href "discovery", title:"Reset list of discovered devices", description:"", params: ["reset": "true"]
@@ -121,14 +126,13 @@ def pairing() {
 	requestPairingKey()
     return dynamicPage(name:"pairing", title:"Smart TV Search Started!", nextPage:"addDevices"){
         section("Pairing Key request has been sent to your TV. Please enter the pairing key and click Next."){
-        	input "pairingKey", "number", required:true, title:"Enter Pairing Key", multiple:false
+        	input "pairingKey", "number", required:true, title:"Enter Pairing Key:", multiple:false
         }
     }
 }
 
 def addDevices() {
 	def devices = getDevices()
-    def driver = state.tvs[tvSelector]
     def sectionText = ""
     
     def selectedtv = devices.find { it.value.mac == selectedTvs }
@@ -136,24 +140,13 @@ def addDevices() {
     if(!d) {
         log.debug "Selected TV: ${selectedtv}"
         log.debug "Creating Smart TV with dni: ${selectedtv?.value.mac} and Driver: $driver"
-        
-        try {
-            def newDevice = addChildDevice("goug76", "${driver}", selectedtv?.value.mac, selectedtv?.value.hub, [
-                "label": selectedtv?.value?.name,
-                "data": [
-                    "pairingKey": pairingKey,
-                    "model": selectedtv.value.model,
-                    "port": selectedtv.value.port,
-                    "mac": selectedtv.value.mac,
-                    "ip": selectedtv.value.ip,
-                ]
-           ]) 
-            sectionText = sectionText + "Succesfully added Smart TV with ip address ${selectedtv.value.ip} \r\n"
-        } catch(e) {
-            sectionText = sectionText + "An error occured ${e} \r\n"
+        sectionText = createDevice(selectedtv)
+    } else {
+        if(d.deviceNetworkId != selectedtv.value.mac) {
+            deleteDevices()
+            sectionText = createDevice(selectedtv)
         }
     }
-    log.debug sectionText
     return dynamicPage(name:"addDevices", title:"Devices Added", nextPage:"mainPage") {
     	if(sectionText != ""){
         	section("Add Smart TV Results:") {
@@ -162,34 +155,6 @@ def addDevices() {
         } else {
         	section("No devices added") {
             	paragraph "All selected TVs have previously been added"
-            }
-        }
-    }
-}
-
-def changeName() {
-    def tv = getChildDevice(state.currentTvId)
-    tv.label = settings["${state.currentTvId}_label"]
-    dynamicPage(name: "changeName", title: "Change Name Summary", nextPage: "mainPage") {
-        section {
-            paragraph "${state.currentDisplayName} has been renamed to ${tv.label}. Press \"Next\" to continue"
-        }
-    }
-}
-
-def deleteTv() {
-    try {
-        unsubscribe()
-        deleteChildDevice(state.currentTvId)
-        dynamicPage(name: "deleteTv", title: "Deletion Summary", nextPage: "mainPage") {
-            section {
-                paragraph "${state.currentDisplayName} has been deleted. Press \"Next\" to continue"
-            }
-        }
-    } catch(e) {
-        dynamicPage(name: "deleteTv", title: "Deletion Summary", nextPage: "mainPage") {
-            section {
-                paragraph "Error: ${(e as String).split(":")[1]}. Press \"Next\" to continue"
             }
         }
     }
@@ -210,14 +175,39 @@ def updated() {
 }
 
 def uninstalled() {
-    getChildDevices().each {
-        deleteChildDevice(it.deviceNetworkId)
-    }
+    deleteDevices()
 }
 
 def initialize() {
+    if(childName) {
+        getChildDevices().each {
+            it.label = childName
+        }
+    }
 	ssdpSubscribe()
-    runEvery3Hours("ssdpDiscover")
+    switch(heartBeatCheck) {
+        case "1":
+            runEvery1Minute(ssdpDiscover)
+            break
+        case "5":
+            runEvery5Minutes(ssdpDiscover)
+            break
+        case "10":
+            runEvery10Minutes(ssdpDiscover)
+            break
+        case "15":
+            runEvery15Minutes(ssdpDiscover)
+            break
+        case "30":
+            runEvery30Minutes(ssdpDiscover)
+            break
+        case "60":
+            runEvery1Hour(ssdpDiscover)
+            break
+        case "180":
+            runEvery3Hours(ssdpDiscover)
+            break        
+    }
 }
 
 Map deviceDiscovered() {
@@ -304,6 +294,33 @@ public requestPairingKey() {
   	]
     log.debug "HTTP REQUEST: ${httpRequest}"    
     sendHubCommand(new hubitat.device.HubAction(httpRequest))
+}
+
+def createDevice(selectedtv) {
+    def driver = state.tvs[tvSelector]
+    def sectionText = ""
+      try {
+          def newDevice = addChildDevice("goug76", "${driver}", selectedtv?.value.mac, selectedtv?.value.hub, [
+              "label": selectedtv?.value?.name,
+              "data": [
+                  "pairingKey": pairingKey,
+                  "model": selectedtv.value.model,
+                  "port": selectedtv.value.port,
+                  "mac": selectedtv.value.mac,
+                  "ip": selectedtv.value.ip,
+                  ]
+          ])
+          sectionText = sectionText + "Succesfully added Smart TV with ip address ${selectedtv.value.ip} \r\n"
+      } catch(e) {
+          sectionText = sectionText + "An error occured ${e} \r\n"
+      }
+    return sectionText
+}
+
+def deleteDevices() {
+    getChildDevices().each {
+        deleteChildDevice(it.deviceNetworkId)
+    }
 }
 
 def ssdpHandler(evt) {
