@@ -26,8 +26,8 @@ metadata {
 
 
 	preferences {
-        //CODE
-  }
+        	//CODE
+  	}
 }
 // Then create the method for the button. 
 def exampleButton() {
