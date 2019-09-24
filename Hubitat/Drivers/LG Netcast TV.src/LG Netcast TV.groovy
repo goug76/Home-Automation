@@ -281,9 +281,7 @@ void callBackHandler(hubitat.device.HubResponse hubResponse) {
 
 def ping() {
 	if (detailedLog) log.debug "Checking if device is alive'"
-    asynchttpGet("pingHandler", [
-		uri: "http://${getDataValue("ip")}/"	
-	]);
+    asynchttpGet("pingHandler", [uri: "http://${getDataValue("ip")}/"])
 }
 
 def pingHandler(response, data) {
