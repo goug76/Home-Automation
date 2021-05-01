@@ -27,6 +27,7 @@ definition(
     author: "John Goughenour",
     description: "Smart app to discover and subscribe to TV events for Smart TVs.",
     category: "My Apps",
+    parent: "goug76:Smart Home Automation",
     iconUrl: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png",
     iconX2Url: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png",
     iconX3Url: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png")
@@ -71,7 +72,7 @@ def mainPage() {
         	label title: "App Name:", required: false
             mode title: "Only run during specific mode(s):", required: false
         }
-        section("<p style=\"border-bottom:1px solid\"/>") {
+        section("<p style=\"border-bottom:1px solid\">About</p>") {
             paragraph "<p style=\"text-align:center\"><strong>John Goughenour</strong></br>${app.name}</br><em>${version()}</em></p>"
         }
     }    
@@ -135,7 +136,7 @@ def addDevices() {
     def sectionText = ""
     
     def selectedtv = devices.find { it.value.mac == selectedTvs }
-    d = getChildDevices()?.find { it.deviceNetworkId == selectedtv.value.mac }
+    def d = getChildDevices()?.find { it.deviceNetworkId == selectedtv.value.mac }
     if(!d) {
         log.debug "Selected TV: ${selectedtv}"
         log.debug "Creating Smart TV with dni: ${selectedtv?.value.mac} and Driver: $driver"
