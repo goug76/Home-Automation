@@ -85,13 +85,13 @@ def initialize(){
         }
     }   
     if(autoOff && autoOff > 0) {
-        def timer = autoOff * 10
-        if(timer != (device.currentValue("AutoOff") * 10)) {
-            action("PulseTime", timer)
+        def timer = autoOff + 100
+        if(timer != (device.currentValue("AutoOff") + 100)) {
+            action("PulseTime1", timer)
         }
     } else if(autoOff != (device.currentValue("AutoOff"))) {    
     	if (detailedLog) {log.debug "Disabling Auto Off"}
-       	action("PulseTime", "0")
+       	action("PulseTime1", "0")
     }
     if("[" + device.label + "]" != device.currentValue("FriendlyName")) {
         def fName = device.label.replace(" ", "%20")
@@ -128,13 +128,13 @@ def updateStatus(){
 def on() {
 	if (detailedLog) {log.debug "$device.displayName on command received, status: switch - ${device.currentValue("switch")}"}	
     action ("Power", "on")
-    runIn (5, updateStatus)
+    runIn (6, updateStatus)
 }
 
 def off() {
 	if (detailedLog) {log.debug "$device.displayName off command received, status: switch - ${device.currentValue("switch")}"}
 	action("Power", "off")
-    runIn (5, updateStatus)
+    runIn (6, updateStatus)
 }
 
 def refresh() {
@@ -214,7 +214,7 @@ void callBackHandler(hubitat.device.HubResponse hubResponse) {
             	sendEvent(name: "PowerOnState", value: powerState)
                 break
         	case ~/\{PulseTime1=.*/:
-            	def bTime = (msg.PulseTime1.split(' ') [0]).toInteger() / 10
+            	def bTime = (msg.PulseTime1.Set).toInteger() - 100
                 def currentOff = device.currentValue("AutoOff")
             	if (detailedLog && currentOff != bTime) {log.debug "$device.displayName updated: AutoOff from: $currentOff seconds to $bTime seconds"}
                 sendEvent(name: "AutoOff", value: bTime, unit: "seconds")
