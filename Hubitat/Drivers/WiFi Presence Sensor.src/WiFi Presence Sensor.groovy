@@ -1,7 +1,7 @@
 /**
  *  iPhone WiFi Presence Sensor
  *
- *  Copyright 2019 Joel Wetzel
+ *  Copyright 2019 John Goughenour
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -17,7 +17,7 @@
 import groovy.json.*
 	
 metadata {
-	definition (name: "iPhone WiFi Presence Sensor", namespace: "joelwetzel", author: "Joel Wetzel") {
+	definition (name: "WiFi Presence Sensor", namespace: "goug76", author: "John Goughenour") {
 		capability "Refresh"
 		capability "Sensor"
         capability "PresenceSensor"
