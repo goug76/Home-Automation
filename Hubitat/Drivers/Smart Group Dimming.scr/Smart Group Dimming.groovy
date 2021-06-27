@@ -47,13 +47,13 @@ def initialize(){
 // handle commands
 def on() {
 	if (detailedLog) log.debug "${device.displayName} on command received, status: switch - ${device.currentValue("switch")}"
-	sendEvent(name: "percentage", value: 100)
+	sendEvent(name: "percentageOn", value: 100)
 	sendCommand("on", true)
 }
 
 def off() {
 	if (detailedLog) log.debug "${device.displayName} off command received, status: switch - ${device.currentValue("switch")}"
-	sendEvent(name: "percentage", value: 0)
+	sendEvent(name: "percentageOn", value: 0)
 	sendCommand("off", true)
 }
 
