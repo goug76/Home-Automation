@@ -139,4 +139,3 @@ private triggerActuator() {
 	log.debug "triggerActuator()"
     actuatorSwitch.on()
 }
-
