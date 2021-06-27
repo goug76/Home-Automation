@@ -39,6 +39,7 @@ def MainPage() {
             if (switches.find{it.hasCommand('setLevel')} != null) {
             	input(name: "dimOff", type: "bool", title: "Turn OFF Devices", required: false,
                 	description: "This group contains dimmable switches. When setting the dim level for the group non-dimmable switches will remain on. If you want the non-dimmable switches to turn off enable 'Turn OFF Devices'")
+                paragraph "This group contains dimmable switches. When setting the dim level for the group non-dimmable switches will remain on. If you want the non-dimmable switches to turn off enable 'Turn OFF Devices'"
             }
             input "deviceName", "text", title: "Child Device Group Name", required: true, description: "Name virtual Switch to be created to control group"
         }
