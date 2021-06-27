@@ -29,9 +29,8 @@ preferences {
 	page(name: "mainPage")
     page(name: "roomOccupancy")
     page(name: "smartGroups")
-    page(name: "abc")
     page(name: "garageDoor")
-    page(name: "groups")
+    page(name: "association")
     page(name: "assist")
     page(name: "smartTV")
 }
@@ -39,11 +38,10 @@ preferences {
 def mainPage() {
 	dynamicPage(name: "mainPage", title: "Your Automations", install: true, uninstall: true, submitOnChange: true) {
         section("Smart Groups") { href "smartGroups", title: "Your Smart Groups", description: "", image: "http://cdn.device-icons.smartthings.com/secondary/smartapps-tile@2x.png"}  
-    	section("Room Occupancy") {href "roomOccupancy", title: "Your Rooms", description: "", image: "http://cdn.device-icons.smartthings.com/Home/home4-icn@2x.png"}        
-        //section("Advanced Button Controller") {href "abc", title: "Your Buttons", description: "", image: "https://raw.githubusercontent.com/paulsheldon/SmartThings-PS/master/resources/abc/images/abcNew.png"}    
+    	section("Room Occupancy") {href "roomOccupancy", title: "Your Rooms", description: "", image: "http://cdn.device-icons.smartthings.com/Home/home4-icn@2x.png"}          
         section("Smart TVs") { href "smartTV", title: "Your Smart TVs", description: "", image: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png"}   
         section("Garage Doors") { href "garageDoor", title: "Your Garage Doors", description: "", image: "http://cdn.device-icons.smartthings.com/Transportation/transportation14-icn@2x.png"}   
-        //section("Groups") {href "groups", title: "Your Groups", description: "", image: "https://cdn.rawgit.com/Kriskit/SmartThingsPublic/master/smartapps/kriskit/trendsetter/icon@2x.png"}
+        section("Z-Wave Association Tool") {href "association", title: "Your Associations", description: "", image: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience@2x.png"}
         //section("Ecobee Mode Assist") {href "assist", title: "Your Modes", description: "", image: "https://s3.amazonaws.com/smartapp-icons/Partner/ecobee@2x.png"}
     }
 }
@@ -80,18 +78,17 @@ def garageDoor() {
     }
 }
 
-def groups() {
-	dynamicPage(name: "groups", title: "Your Groups", install: false, submitOnChange: true) {
+def association() {
+	dynamicPage(name: "association", title: "Your Groups", install: false, submitOnChange: true) {
     	section("") {
-        	app(name: "groups", appName: "Group", namespace: "kriskit.trendSetter", title: "Create Group...", multiple: true)
-        }
-    }
-}
-
-def abc() {
-	dynamicPage(name: "abc", title: "Advanced Button Controler", install: false, submitOnChange: true) {
-    	section {
-        	app(name: "abc", appName: "ABC Child Creator", namespace: "paulsheldon", title: "Create Button...", multiple: true)
+        	app(name: "association", appName: "Z-Wave Association", namespace: "erocm123", title: "Create New Association", multiple: true)
+            paragraph "This tool allows you to create direct associations between multiple Z-Wave devices. In order for it to create the association, the source device handler needs to have support for this tool added to it. Some examples of handlers that have support are the Inovelli Plug handlers, Inovelli Dimmer & Switch handlers, and the Inovelli Door/Window Sensor handler. The destination does not need anything added to it's handler, but does need to be a Z-Wave device.\n\nFor more information on how this SmartApp works click the link below."
+            href(name: "hrefNotRequired",
+             title: "Z-Wave Association Tool on Github",
+             required: false,
+             style: "external",
+             url: "https://github.com/erocm123/SmartThingsPublic/tree/master/smartapps/erocm123/z-waveat",
+             description: "Tap to view information about this SmartApp")
         }
     }
 }
