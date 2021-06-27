@@ -40,10 +40,10 @@ def mainPage() {
             input("virtual", "bool", title: "Create Switch to enable/disable app")
         }
         if(!disable) {
-         	section("Triggers") {href "triggers", title: "Choose Triggers", description: ""} 
-            section("Devices") {href "devices", title: "Select Devices & Modes", description: ""}
-            section("Delays") {href "delays", title: "Select Delays", description: ""}
-            section("Restrictions") {href "restrictions", title: "Select Restrictions", description: ""}
+         	section("Triggers") {href "triggers", title: "Choose Triggers", description: "", state: selectOk?.triggers ? "complete" : null} 
+            section("Devices") {href "devices", title: "Select Devices & Modes", description: "", state: selectOk?.devices ? "complete" : null}
+            section("Delays") {href "delays", title: "Select Delays", description: "", state: selectOk?.delays ? "complete" : null}
+            section("Restrictions") {href "restrictions", title: "Select Restrictions", description: "", state: selectOk?.restrictions ? "complete" : null}
     	}
         
         section("Additional Options") {
@@ -59,8 +59,12 @@ def mainPage() {
 def triggers() {
 	dynamicPage(name: "triggers", title: "Select Triggers", nextPage: "mainPage") {
     	section("When these sensors are triggered") {
-    		input "motion", "capability.motionSensor", title: "Which Motion Sensor?", hideWhenEmpty: true, multiple: true, required: false
-            input "contact", "capability.contactSensor", title: "Which Contact Sensor?", hideWhenEmpty: true, multiple: true, required: false
+            input "motion", "capability.motionSensor", title: "Which Motion Sensor?", hideWhenEmpty: true, multiple: true, required: false
+            input(name: "contact", type: "capability.contactSensor", title: "Which Contact Sensor?", hideWhenEmpty: true, multiple: true, required: false, submitOnChange: true)
+            if(contact) {
+                input(name: "bathroom", type: "bool", title: "Bathroom", defaultValue: false, required: false)
+                paragraph "When Bathroom is set the auto timer will stop when the door is closed to prevent the lights from turning off while in the shower.'"
+            }
             input "presence ", "capability.presenceSensor", title: "Which Presence  Sensor?", hideWhenEmpty: true, multiple: true, required: false
         }
     }
@@ -118,7 +122,7 @@ def delays() {
         }
         if(nite) {
         	section("Turn devices off after this many minutes of no activity for night/bedtime modes") {
-            	input "niteMinutes", "number", title: "Minutes", required: false
+            	input "niteMinutes", "number", title: "niteMinutes", required: false
             }
         }
     }
@@ -146,6 +150,17 @@ def restrictions() {
         	input("otherLights", "bool", title: "Disable Other Lights", submitOnChange: true)
         }
     }
+}
+
+def getSelectOk() {
+	def status =
+	[
+		triggers: motion ?: contact ?: presence,
+		devices: switches ?: eveningSwitches ?: niteSwitches,
+		delays: offMinutes ?: eveningMinutes ?: niteMinutes,
+		restrictions: betweenTime ?: setRise ?: luxSensor ?: otherLights
+	]
+	status << [all: status.triggers]
 }
 
 def installed() {
@@ -185,14 +200,15 @@ def initialize() {
 
 def subscribeEvents(mode) {
     def curSwitches = getSwitches(mode)
-    subscribe(switches, "switch.on", switchOnHandler)
-    //subscribe(curSwitches, "switch.on", switchOnHandler)
+    //subscribe(switches, "switch.on", switchOnHandler)
+    subscribe(curSwitches, "switch.on", switchOnHandler)
     if(getChildDevice(atomicState.deviceID)) subscribe(getChildDevice(atomicState.deviceID), "switch", disableHandler)
     if(setRise) subscribe(location, "sunset", astroHandler)
     if(setRise) subscribe(location, "sunrise", astroHandler)
 	if(motion) subscribe(motion, "motion.active", triggerHandler)
     if(motion) subscribe(motion, "motion.inactive", motionStoppedHandler)
     if(contact) subscribe(contact, "contact.open", triggerHandler)
+    if(bathroom) subscribe(contact, "contact.closed", bathroomHandler)
     if(presence) subscribe(presence, "presence.present", triggerHandler)
     subscribe(location, "mode", modeHandler)
 }
@@ -200,6 +216,7 @@ def subscribeEvents(mode) {
 def triggerHandler(evt) {
 	if (detailedLog) log.debug "Room Occupancy ${app.label} => ${evt.name} triggered"
     unschedule(checkMotion)
+    if(evt.name == 'contact' && disable) app.updateSetting("disable", [type: "bool", value: false])
 	if(!disable) {    	
         if(checkRestrictions()) {
             def mode = getMode()
@@ -225,6 +242,12 @@ def triggerHandler(evt) {
         }
         if(evt.name != "motion" && delay) runIn(60 * delay, checkMotion)
     }
+}
+
+def bathroomHandler(evt) {
+    if (detailedLog) log.debug "Room Occupancy ${app.label} => ${evt.name} triggered"
+	unschedule(checkMotion)
+    app.updateSetting("disable", [type: "bool", value: true])
 }
 
 def switchOnHandler(evt) {
@@ -266,9 +289,9 @@ def motionStoppedHandler(evt) {
 
 def modeHandler(evt) {
     if (detailedLog) log.debug "Room Occupancy ${app.label} => ${evt.name} triggered"
-    //unsubscribe()
+    unsubscribe()
     def mode = getMode()
-    //subscribeEvents(mode)
+    subscribeEvents(mode)
     def curSwitches = getSwitches(mode)
     if (curSwitches.count {it.currentValue('switch') == 'on'}) {
         def curLevel = getLevel(mode)
