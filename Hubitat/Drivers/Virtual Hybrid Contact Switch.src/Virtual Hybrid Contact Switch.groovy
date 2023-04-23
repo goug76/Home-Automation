@@ -26,9 +26,11 @@ metadata {
     command "close"
     }
   preferences {
-        input(name: "autoOff", type: "number", title: "<b>Auto Off</b>", description: "Automatically turn off device after x many seconds </br>Default: 0 (Disabled)",
-                defaultValue: 0, required: false)
-        input name:"about", type: "text", title: "<b>About Driver</b>", description: "<p style=\"text-align:center\"><strong>John Goughenour</strong> (goug76)</br>${name()}<br/><em>${version()}</em></p>"
+        input name: "autoOff", type: "number", title: "<b>Auto Off</b>", 
+            description: "Automatically turn off device after x many seconds </br>Default: 0 (Disabled)",
+            defaultValue: 0, required: false
+        input name:"about", type: "text", title: "<b>About Driver</b>", 
+            description: "A hybrid contact sensor/swtich that can be used in Hubitat to trigger Alexa Routines. <p style=\"text-align:center\"></br><strong>John Goughenour</strong> (goug76)</br>${name()}<br/><em>${version()}</em></p>"
   }
 }
 
