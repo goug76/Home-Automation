@@ -1,7 +1,7 @@
 /**
  *  Virtual Hybrid Contact Switch
  *
- *  Copyright 2019 John Goughenour
+ *  Copyright 2023 John Goughenour
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
