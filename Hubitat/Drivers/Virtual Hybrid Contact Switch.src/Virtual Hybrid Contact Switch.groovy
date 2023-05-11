@@ -15,9 +15,10 @@
 
 public static String version()      {  return "v1.0.0"  }
 public static String name()         {  return "Virtual Hybrid Contact Switch"  }
+public static String driverInfo()   {  return "<p style=\"text-align:center\"></br><strong><a href='https://thisoldsmarthome.com' target='_blank'>This Old Smart Home</a></strong> (tosh)</br>${name()}<br/><em>${version()}</em></p>"  }
 
 metadata {
-    definition (name: name(), namespace: "goug76", author: "John Goughenour") {
+    definition (name: name(), namespace: "tosh", author: "John Goughenour") {
     capability "Sensor"
     capability "Contact Sensor"
     capability "Switch"
@@ -30,7 +31,7 @@ metadata {
             description: "Automatically turn off device after x many seconds </br>Default: 0 (Disabled)",
             defaultValue: 0, required: false
         input name:"about", type: "text", title: "<b>About Driver</b>", 
-            description: "A hybrid contact sensor/swtich that can be used in Hubitat to trigger Alexa Routines. <p style=\"text-align:center\"></br><strong>John Goughenour</strong> (goug76)</br>${name()}<br/><em>${version()}</em></p>"
+            description: "A hybrid contact sensor/swtich that can be used in Hubitat to trigger Alexa Routines. ${driverInfo()}"
   }
 }
 
