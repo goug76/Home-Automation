@@ -1,5 +1,5 @@
 /**
- *  iPhone WiFi Presence Sensor
+ *  Wi-Fi Presence Sensor
  *
  *  Copyright 2019 John Goughenour
  *
@@ -12,99 +12,77 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- */
-
+ ************************************************Change Record**********************************************************
+ *
+ *    Version 1.0.0
+ *        Initial Release
+ *
+ **********************************************************************************************************************/
 import groovy.json.*
+
+public static String version()          {  return "v1.0.0"  }
+public static String name()             {  return "Wi-Fi Presence Sensor"  }
+public static String driverInfo()       {  return "<p style=\"text-align:center\"></br><strong><a href='https://thisoldsmarthome.com' target='_blank'>This Old Smart Home</a></strong> (tosh)</br>${name()}<br/><em>${version()}</em></p>"  }
 	
 metadata {
-	definition (name: "WiFi Presence Sensor", namespace: "goug76", author: "John Goughenour") {
+	definition (name: name(), namespace: "tosh", author: "John Goughenour") {
 		capability "Refresh"
 		capability "Sensor"
         capability "PresenceSensor"
 	}
 
 	preferences {
-		section {
-			input (
-				type: "string",
-				name: "ipAddress",
-				title: "iPhone IP Address",
-				required: true				
-			)
-			input (
-				type: "number",
-				name: "timeoutMinutes",
-				title: "Timeout Minutes",
-				description: "Approximate number of minutes without a response before deciding the device is away/offline.",
-				required: true,
-				defaultValue: 3
-			)
-			input (
-				type: "bool",
-				name: "enableDebugLogging",
-				title: "Enable Debug Logging?",
-				required: true,
-				defaultValue: true
-			)
-		}
+        input (type: "string", name: "ipAddress", title: "<b>Phone IP Address</b>", required: true)
+		input(name: "infoLogging", type: "bool", title: "<b>Enable Description Text</b>", defaultValue: "true", description: "", required: false)
+        input(name: "debugLogging", type: "bool", title: "<b>Enable Debug Logging</b>", defaultValue: "false", description: "", required: false)
+        input (type: "number", name: "timeout", title: "<b>Timeout</b>", range: "1..99", required: true, defaultValue: 3, 
+		    description: "Approximate number of minutes without a response before device is not present.</br>Range: 1-99")
+        input name:"about", type: "text", title: "<b>About Driver</b>", 
+            description: "A simple Wi-Fi presence sensor for detecting family members based on their phones connection to your home network. ${driverInfo()}"
 	}
 }
-
-
-def log(msg) {
-	if (enableDebugLogging) {
-		log.debug(msg)	
-	}
-}
-
 
 def installed () {
-	log.info "${device.displayName}.installed()"
+	if(infoLogging) log.info "${device.displayName} is installed()"
     updated()
 }
 
-
 def updated () {
-	log.info "${device.displayName}.updated()"
+	if(infoLogging) log.info "${device.displayName} is updated()"
     
-    state.tryCount = 0
-    
-    runEvery1Minute(refresh)		// Generally test it every minute.
-    runIn(2, refresh)				// But test it once, right after we install or update it too.
+    state.tryCount = 0    
+    runEvery1Minute(refresh)
+    runIn(2, refresh)
 }
 
 
 def refresh() {
-	log "${device.displayName}.refresh()"
-
-	state.tryCount = state.tryCount + 1
-    
-    if (state.tryCount > (timeoutMinutes < 1 ? 1 : timeoutMinutes) && device.currentValue('presence') != "not present") {
-        def descriptionText = "${device.displayName} is OFFLINE";
-        log descriptionText
-        sendEvent(name: "presence", value: "not present", linkText: deviceName, descriptionText: descriptionText)
-    }
-    
-	if (ipAddress == null || ipAddress.size() == 0) {
+	if(infoLogging) log.info "${device.displayName} is refresh()"
+    if (ipAddress == null || ipAddress.size() == 0) {
+        if(debugLogging) log.debug "${device.displayName} has no IP address"
 		return
 	}
-	
-	asynchttpGet("httpGetCallback", [
-		uri: "http://${ipAddress}/"	
-	]);
+
+	state.tryCount++
+    
+    if (state.tryCount > timeout) {
+        def descriptionText = "${device.displayName} is not present";
+        if(infoLogging) log.info descriptionText
+        sendEvent(name: "presence", value: "not present", type: 'virtual', descriptionText: descriptionText)
+    }
+    
+	asynchttpGet("httpGetCallback", [uri: "http://${ipAddress}/"])
 }
 
 
 def httpGetCallback(response, data) {
-	//log.debug "${device.displayName}: httpGetCallback(${groovy.json.JsonOutput.toJson(response)}, data)"
+	if(debugLogging) log.debug "${device.displayName}: httpGetCallback(${groovy.json.JsonOutput.toJson(response)}, data)"
 	
-	if (response != null && response.status == 408 && response.errorMessage.contains("Connection refused")) {
+	if (response && response.status == 408 && response.errorMessage.contains("Connection refused")) {
 		state.tryCount = 0
 		
-		if (device.currentValue('presence') != "present") {
-			def descriptionText = "${device.displayName} is ONLINE";
-			log descriptionText
-			sendEvent(name: "presence", value: "present", linkText: deviceName, descriptionText: descriptionText)
-		}
+		def descriptionText = "${device.displayName} is present";
+		if(infoLogging) log.info descriptionText
+		sendEvent(name: "presence", value: "present", type: 'virtual', descriptionText: descriptionText)
 	}
 }
