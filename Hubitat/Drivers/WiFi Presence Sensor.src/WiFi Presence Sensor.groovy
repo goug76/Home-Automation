@@ -32,10 +32,10 @@ metadata {
 	}
 
 	preferences {
-        input (type: "string", name: "ipAddress", title: "<b>Phone IP Address</b>", required: true)
+        input (name: "ipAddress", type: "string", title: "<b>Phone IP Address</b>", required: true)
 		input(name: "infoLogging", type: "bool", title: "<b>Enable Description Text</b>", defaultValue: "true", description: "", required: false)
         input(name: "debugLogging", type: "bool", title: "<b>Enable Debug Logging</b>", defaultValue: "false", description: "", required: false)
-        input (type: "number", name: "timeout", title: "<b>Timeout</b>", range: "1..99", required: true, defaultValue: 3, 
+        input (name: "timeout", type: "number", title: "<b>Timeout</b>", range: "1..99", required: true, defaultValue: 3, 
 		    description: "Approximate number of minutes without a response before device is not present.</br>Range: 1-99")
         input name:"about", type: "text", title: "<b>About Driver</b>", 
             description: "A simple Wi-Fi presence sensor for detecting family members based on their phones connection to your home network. ${driverInfo()}"
@@ -43,21 +43,24 @@ metadata {
 }
 
 def installed () {
-	if(infoLogging) log.info "${device.displayName} is installed()"
-    updated()
+	if(infoLogging) log.info "${device.displayName} is installing"
+    initialize()
 }
 
 def updated () {
-	if(infoLogging) log.info "${device.displayName} is updated()"
-    
+	if(infoLogging) log.info "${device.displayName} is updating"
+    initialize()
+}
+
+def initialize() {
+    if(infoLogging) log.info "${device.displayName} is  initializing"
     state.tryCount = 0    
     runEvery1Minute(refresh)
     runIn(2, refresh)
 }
 
-
 def refresh() {
-	if(infoLogging) log.info "${device.displayName} is refresh()"
+	if(infoLogging) log.info "${device.displayName} is refreshing"
     if (ipAddress == null || ipAddress.size() == 0) {
         if(debugLogging) log.debug "${device.displayName} has no IP address"
 		return
@@ -73,7 +76,6 @@ def refresh() {
     
 	asynchttpGet("httpGetCallback", [uri: "http://${ipAddress}/"])
 }
-
 
 def httpGetCallback(response, data) {
 	if(debugLogging) log.debug "${device.displayName}: httpGetCallback(${groovy.json.JsonOutput.toJson(response)}, data)"
