@@ -62,20 +62,24 @@ metadata {
 }
 
 def installed(){
+	if(infoLogging) log.info "${device.displayName} is installing"
 	initialize()
 }
 
 def updated(){
+	if(infoLogging) log.info "${device.displayName} is updating"
 	unschedule()
     configure()
 	initialize()
 }
 
 def initialize(){
+    if(infoLogging) log.info "${device.displayName} is  initializing"
     refresh()
 }
 
 def refresh() {
+	if(infoLogging) log.info "${device.displayName} is refreshing"
     def cmd = [
         "he rattr 0x${device.deviceNetworkId} 1 0x0402 0x0000 {}","delay ${defaultDelay}",  //temp
         "he rattr 0x${device.deviceNetworkId} 1 ${zigbee.POWER_CONFIGURATION_CLUSTER} 0x0020 {}","delay ${defaultDelay()}",  //battery
@@ -84,6 +88,7 @@ def refresh() {
 }
 
 def configure() {
+	if(infoLogging) log.info "${device.displayName} is configuring setup"
     int reportInterval = batteryInterval.toInteger() * 60 * 60
     List cmd = ["zdo bind 0x${device.deviceNetworkId} 1 1 0x0500 {${device.zigbeeId}} {}", "delay ${defaultDelay()}",] // IAS Zone
     cmd += zigbee.enrollResponse(1200) // Enroll in IAS Zone
