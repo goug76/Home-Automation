@@ -29,7 +29,7 @@ public static String version()      {  return "v1.0.3"  }
 public static String name()         {  return "MQTT Notifications"  }
 public static String codeUrl()
 {
-    return "https://raw.githubusercontent.com/TOSH-SmartHome/Hubitat-MQTT-Notifications/main/mqtt_notifications.groovy"
+    return "https://raw.githubusercontent.com/goug76/Home-Automation/refs/heads/master/Hubitat/Drivers/MQTT%20Notifications.src/MQTT%20Notifications.groovy"
 }
 public static String driverInfo()
 {
