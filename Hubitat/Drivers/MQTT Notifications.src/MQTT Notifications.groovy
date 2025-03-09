@@ -1,104 +1,112 @@
 /**
  *  MQTT Notifications
  *
- *  Copyright 2023 John Goughenour
+ *  MIT License
  *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at:
+ *  Copyright (c) 2023 This Old Smart Home
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
  *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *  for the specific language governing permissions and limitations under the License.
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
  *
- ************************************************Change Record**********************************************************
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
  *
- *    Version 1.0.0
- *        Initial Release
- *
- **********************************************************************************************************************/
+ */
 
-public static String version()          {  return "v1.0.0"  }
-public static String name()             {  return "MQTT Notifications"  }
-public static String driverInfo()       {  return "<p style=\"text-align:center\"></br><strong><a href='https://thisoldsmarthome.com' target='_blank'>This Old Smart Home</a></strong> (tosh)</br>${name()}<br/><em>${version()}</em></p>"  }
+public static String version()      {  return "v1.0.3"  }
+public static String name()         {  return "MQTT Notifications"  }
+public static String codeUrl()
+{
+    return "https://raw.githubusercontent.com/TOSH-SmartHome/Hubitat-MQTT-Notifications/main/mqtt_notifications.groovy"
+}
+public static String driverInfo()
+{
+    return """
+        <p style='text-align:center'></br>
+        <strong><a href='https://thisoldsmarthome.com' target='_blank'>This Old Smart Home</a></strong> (TOSH-SmartHome)</br>
+        ${name()}</br>
+        <em>${version()}</em></p>
+    """
+}
 
 metadata {
-    definition (name: name(), namespace: "tosh", author: "John Goughenour") {
+    definition (name: name(), namespace: "TOSH-SmartHome", author: "John Goughenour", importUrl: codeUrl()) 
+    {
         capability "Notification"
-        
-        command "clearMqttBrokerSettings"
-        command "setMqttBroker", [[name: "MQTT Broker*", type: "STRING", description: "Enter MQTT Broker IP and Port e.g. server_IP:1883"],
-                                  [name: "MQTT User*", type: "STRING", description: "Enter MQTT broker username"]]
-        command "setMessageTopic", [[name: "Message Topic", type: "STRING", description: "Enter MQTT Message Topic to publish to"]]
     }   
     
-    preferences {
-        input(name: "mqttPassword", type: "password", title: "<b>MQTT Password</b>", description: "The password for your MQTT Broker.</br>Enter Password", required: false)
+    preferences 
+    {
+        input(name: "mqttBroker", type: "string", title: "<b>MQTT Broker</b>", description: "Enter MQTT Broker IP and Port e.g. server_IP:1883", required: false)
+        input(name: "mqttUsername", type: "string", title: "<b>MQTT Username</b>", description: "Enter MQTT broker username", required: false)
+        input(name: "mqttPassword", type: "password", title: "<b>MQTT Password</b>", description: "Enter password for your MQTT Broker", required: false)
+        input(name: "mqttTopic", type: "string", title: "<b>MQTT Topic</b>", description: "Enter MQTT Topic to publish to", required: false)
         input(name: "infoLogging", type: "bool", title: "<b>Enable Description Text</b>", defaultValue: "true", description: "", required: false)
         input(name: "debugLogging", type: "bool", title: "<b>Enable Debug Logging</b>", defaultValue: "true", description: "", required: false)
         input name:"about", type: "text", title: "<b>About Driver</b>", description: "Publish notifications to MQTT. ${driverInfo()}"
      }
 }
 
-def installed(){
+def installed()
+{
 	if(infoLogging) log.info "${device.displayName} is installing"
 }
 
-def updated(){
+def updated()
+{
 	if(infoLogging) log.info "${device.displayName} is updating"
-    interfaces.mqtt.disconnect()
-	unschedule()
 }
 
-def uninstalled(){
+def uninstalled()
+{
 	if(infoLogging) log.info "${device.displayName} is uninstalling"
-    interfaces.mqtt.disconnect()
 }
 
 // handle commands
-def deviceNotification(message) {
-    if(getDataValue("MQTT_Broker") && getDataValue("MQTT_User")) {
+def deviceNotification(message)
+{
+    if(infoLogging) log.info "${device.displayName} is sending notification message: ${message}"
+    if(mqttBroker && mqttUsername && mqttTopic) {
         try {
             if(debugLogging) log.debug "${device.displayName} settting up MQTT Broker"
-            interfaces.mqtt.connect("tcp://${getDataValue("MQTT_Broker")}", "hubitat_messages", getDataValue("MQTT_User"), mqttPassword)
+            interfaces.mqtt.connect(
+                "tcp://${mqttBroker}",
+                "${location.hub.name.toLowerCase().replaceAll(' ', '_')}_${device.getDeviceNetworkId()}",
+                mqttUsername, mqttPassword
+            )
             
-            if(debugLogging) log.debug "${device.displayName} is sending message: ${message}"
-            interfaces.mqtt.publish(getDataValue("MQTT_Message_Topic"), message, 2, false)                      
+            if(debugLogging) log.debug "${device.displayName} is sending Topic: ${mqttTopic} Command: ${cmnd}"
+            interfaces.mqtt.publish(mqttTopic, message, 2, false)                      
         } catch(Exception e) {
             log.error "${device.displayName} unable to connect to the MQTT Broker ${e}"
         }
-    } else log.error "${device.displayName} MQTT Broker and MQTT User are not set"
-    interfaces.mqtt.disconnect()  
-}
-
-def setMqttBroker(broker, user) {
-    if(debugLogging) log.debug "${device.displayName} is setting up mqtt broker variables"
-    updateDataValue("MQTT_Broker", "${broker}")
-    updateDataValue("MQTT_User", user)
-}
-
-def clearMqttBrokerSettings() {
-    if(debugLogging) log.debug "${device.displayName} is clearing MQTT Broker data"
-    removeDataValue("MQTT_Broker")
-    removeDataValue("MQTT_User")      
-}
-
-def setMessageTopic(topic) {
-    if(debugLogging) log.debug "${device.displayName} is setting up mqtt message topic variable"
-    if(topic) updateDataValue("MQTT_Message_Topic", "${topic}") else removeDataValue("MQTT_Message_Topic")
+        interfaces.mqtt.disconnect()
+    } else log.warn "${device.displayName} MQTT Broker and MQTT User are not set"
 }
 
 // parse events and messages
-def mqttClientStatus(message) {
+def mqttClientStatus(message)
+{
     switch(message) {
         case ~/.*Connection succeeded.*/:
             if(debugLogging) log.debug "MQTT Client Status: ${device.displayName} successfully connected to MQTT Broker"
             break
         case ~/.*Error.*/:
-        if(debugLogging) log.debug "MQTT Client Status: ${device.displayName} unable to connect to MQTT Broker - ${message}"
+            log.error "MQTT Client Status: ${device.displayName} unable to connect to MQTT Broker - ${message}"
             break
         default:
-            if(debugLogging) log.info "MQTT Client Status ${device.displayName}: unknown status - ${message}"
+            log.warn "MQTT Client Status: ${device.displayName}: unknown status - ${message}"
     }
 }
