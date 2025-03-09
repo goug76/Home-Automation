@@ -22,10 +22,10 @@
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
- *
+ *      TEST CHANGE
  */
 
-public static String version()      {  return "v1.0.3"  }
+public static String version()      {  return "v1.0.4"  }
 public static String name()         {  return "MQTT Notifications"  }
 public static String codeUrl()
 {
