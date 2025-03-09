@@ -45,7 +45,7 @@ public static String driverInfo()
 definition (name: name(), namespace: nameSpace(), author: "John Goughenour", importUrl: codeUrl(),
     description: "Smart app to discover and subscribe to TV events for Smart TVs.",
     category: "My Apps",
-    parent: "goug76:Smart Home Automation",
+    //parent: "goug76:Smart Home Automation",
     iconUrl: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png",
     iconX2Url: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png",
     iconX3Url: "http://cdn.device-icons.smartthings.com/Electronics/electronics15-icn@2x.png")
