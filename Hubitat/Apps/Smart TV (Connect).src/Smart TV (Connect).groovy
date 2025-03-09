@@ -27,6 +27,7 @@
 
 public static String version()      {  return "v2.0.0"  }
 public static String name()         {  return "Smart TV (Connect)"  }
+public static String nameSpace()    {  return "tosh"  }
 public static String codeUrl()
 {
     return "https://raw.githubusercontent.com/goug76/Home-Automation/refs/heads/master/Hubitat/Apps/Smart%20TV%20(Connect).src/Smart%20TV%20(Connect).groovy"
@@ -41,7 +42,7 @@ public static String driverInfo()
     """
 }
 
-definition (name: name(), namespace: "tosh", author: "John Goughenour", importUrl: codeUrl(),
+definition (name: name(), namespace: nameSpace(), author: "John Goughenour", importUrl: codeUrl(),
     description: "Smart app to discover and subscribe to TV events for Smart TVs.",
     category: "My Apps",
     parent: "goug76:Smart Home Automation",
@@ -317,7 +318,7 @@ def createDevice(selectedtv) {
     def driver = state.tvs[tvSelector]
     def sectionText = ""
       try {
-          def newDevice = addChildDevice("goug76", "${driver}", selectedtv?.value.mac, selectedtv?.value.hub, [
+          def newDevice = addChildDevice(nameSpace(), "${driver}", selectedtv?.value.mac, selectedtv?.value.hub, [
               "label": selectedtv?.value?.name,
               "data": [
                   "pairingKey": pairingKey,

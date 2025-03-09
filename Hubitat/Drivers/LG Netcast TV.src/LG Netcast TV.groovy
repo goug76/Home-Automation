@@ -27,6 +27,7 @@
 
 public static String version()      {  return "v1.0.0"  }
 public static String name()         {  return "LG Netcast TV"  }
+public static String nameSpace()    {  return "tosh"  }
 public static String codeUrl()
 {
     return "https://raw.githubusercontent.com/goug76/Home-Automation/refs/heads/master/Hubitat/Drivers/LG%20Netcast%20TV.src/LG%20Netcast%20TV.groovy"
@@ -42,7 +43,7 @@ public static String driverInfo()
 }
 
 metadata {
-	definition (name: name(), namespace: "tosh", author: "John Goughenour", importUrl: codeUrl(), cstHandler: true) {
+	definition (name: name(), namespace: nameSpace(), author: "John Goughenour", importUrl: codeUrl(), cstHandler: true) {
 		capability "Audio Volume"
 		capability "Switch"
 		capability "TV"
