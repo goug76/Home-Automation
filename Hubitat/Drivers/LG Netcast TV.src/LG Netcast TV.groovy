@@ -105,6 +105,7 @@ def initialize(){
     }
     if (detailedLog) log.debug "Cron: $cron"
     schedule(cron, refresh)
+    subscribeToUPnP()
     refresh()
 }
 
@@ -273,6 +274,41 @@ def sendAction(method, path, body = "") {
     	if (detailedLog) log.debug "Exception Occured $e on $hubAction"
     }
 }
+
+def subscribeToUPnP() {
+    def callbackUrl = "http://${location.hub.localIP}:39501/" // Use Hubitat's local endpoint
+    def headers = [:]
+    headers.put("HOST", "${state.host}")
+    headers.put("CALLBACK", "<${callbackUrl}>")
+    headers.put("NT", "upnp:event")
+    headers.put("TIMEOUT", "Second-1800") // Renew every 30 min
+
+    def httpRequest = [
+        method: "SUBSCRIBE",
+        path: "/udap/api/event",  // Adjust this if needed
+        headers: headers
+    ]
+    
+    try {
+        sendHubCommand(new hubitat.device.HubAction(httpRequest, null, [callback: "upnpEventHandler"]))
+        if (detailedLog) log.debug "Subscribed to UPnP events"
+    } catch (Exception e) {
+        log.error "Failed to subscribe to UPnP events: $e"
+    }
+}
+
+def upnpEventHandler(hubitat.device.HubResponse hubResponse) {
+    if (detailedLog) log.debug "UPnP Event Received: ${hubResponse.body}"
+    def xmlData = new XmlSlurper().parseText(hubResponse.body)
+    
+    if (xmlData.volume.text()) {
+        sendEvent(name: "volume", value: xmlData.volume.text().toInteger())
+    }
+    if (xmlData.channel.text()) {
+        sendEvent(name: "channel", value: xmlData.channel.text())
+    }
+}
+
 
 void callBackHandler(hubitat.device.HubResponse hubResponse) {
     if (detailedLog) log.debug "Parsing '${hubResponse.body}'"
